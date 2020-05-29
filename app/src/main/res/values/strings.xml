@@ -1,0 +1,87 @@
+<resources>
+    <string name="app_name">GP Calculator</string>
+
+    <string name="add_new_semester">+ Add New Semester</string>
+    <string name="add_new">Add New</string>
+    <string name="edit">Edit</string>
+    <string name="details">Details</string>
+
+
+
+    <string name="details_already_exist">GP already exist. Do you want to update?</string>
+    <string name="confirm_to_delete">Do you want to delete?</string>
+    <string name="successful_delete_msg">Deleted successfully</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
+    <string name="level">Level:</string>
+    <string name="session">Session:</string>
+    <string name="semester">Semester:</string>
+    <string name="total_units">Total Units:</string>
+    <string name="stat">Stat: </string>
+    <string name="courses">Courses</string>
+    <string name="units">Units</string>
+    <string name="grades">Grades</string>
+    <string name="add_row">+</string>
+    <string name="calc_btn">Calculate</string>
+    <string name="del_row">-</string>
+    <string name="edit_btn">Edit</string>
+    <string name="save_btn">Save</string>
+    <string name="update_btn">Update</string>
+
+    <string name="level_100">100</string>
+    <string name="level_200">200</string>
+    <string name="level_300">300</string>
+    <string name="level_400">400</string>
+    <string name="level_500">500</string>
+    <string name="level_600">600</string>
+    <string name="level_700">700</string>
+
+    <string name="session_2010">2010/2011</string>
+    <string name="session_2011">2011/2012</string>
+    <string name="session_2012">2012/2013</string>
+    <string name="session_2013">2013/2014</string>
+    <string name="session_2014">2014/2015</string>
+    <string name="session_2015">2015/2016</string>
+    <string name="session_2016">2016/2017</string>
+    <string name="session_2017">2017/2018</string>
+    <string name="session_2018">2018/2019</string>
+    <string name="session_2019">2019/2020</string>
+    <string name="session_2020">2020/2021</string>
+
+    <string name="semester_rain">Rain</string>
+    <string name="semester_harmattan">Harmattan</string>
+
+    <string name="value_none">None</string>
+    <string name="grade_a">A</string>
+    <string name="grade_b">B</string>
+    <string name="grade_c">C</string>
+    <string name="grade_d">D</string>
+    <string name="grade_e">E</string>
+    <string name="grade_f">F</string>
+
+    <string name="unit_1">1</string>
+    <string name="unit_2">2</string>
+    <string name="unit_3">3</string>
+    <string name="unit_4">4</string>
+    <string name="unit_5">5</string>
+    <string name="unit_6">6</string>
+    <string name="unit_7">7</string>
+    <string name="unit_8">8</string>
+    <string name="unit_9">9</string>
+    <string name="unit_10">10</string>
+    <string name="unit_11">11</string>
+    <string name="unit_12">12</string>
+    <string name="unit_13">13</string>
+    <string name="unit_14">14</string>
+    <string name="unit_15">15</string>
+    <string name="unit_16">16</string>
+    <string name="unit_17">17</string>
+    <string name="unit_18">18</string>
+    <string name="unit_19">19</string>
+    <string name="unit_20">20</string>
+    <string name="unit_21">21</string>
+    <string name="unit_22">22</string>
+    <string name="unit_23">23</string>
+    <string name="unit_24">24</string>
+</resources>

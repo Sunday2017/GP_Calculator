@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <string-array name="grades_option">
+        <item>@string/value_none</item>
+        <item>@string/grade_a</item>
+        <item>@string/grade_b</item>
+        <item>@string/grade_c</item>
+        <item>@string/grade_d</item>
+        <item>@string/grade_e</item>
+        <item>@string/grade_f</item>
+    </string-array>
+
+    <string-array name="level_option">
+        <item>@string/value_none</item>
+        <item>@string/level_100</item>
+        <item>@string/level_200</item>
+        <item>@string/level_300</item>
+        <item>@string/level_400</item>
+        <item>@string/level_500</item>
+        <item>@string/level_600</item>
+        <item>@string/level_700</item>
+    </string-array>
+
+    <string-array name="session_option">
+        <item>@string/value_none</item>
+        <item>@string/session_2010</item>
+        <item>@string/session_2011</item>
+        <item>@string/session_2012</item>
+        <item>@string/session_2013</item>
+        <item>@string/session_2014</item>
+        <item>@string/session_2015</item>
+        <item>@string/session_2016</item>
+        <item>@string/session_2017</item>
+        <item>@string/session_2018</item>
+        <item>@string/session_2019</item>
+        <item>@string/session_2020</item>
+    </string-array>
+
+    <string-array name="semester_option">
+        <item>@string/value_none</item>
+        <item>@string/semester_harmattan</item>
+        <item>@string/semester_rain</item>
+    </string-array>
+
+    <string-array name="units_option">
+        <item>@string/value_none</item>
+        <item>@string/unit_1</item>
+        <item>@string/unit_2</item>
+        <item>@string/unit_3</item>
+        <item>@string/unit_4</item>
+        <item>@string/unit_5</item>
+        <item>@string/unit_6</item>
+        <item>@string/unit_7</item>
+        <item>@string/unit_8</item>
+        <item>@string/unit_9</item>
+        <item>@string/unit_10</item>
+    </string-array>
+
+    <string-array name="total_units_option">
+        <item>@string/value_none</item>
+        <item>@string/unit_1</item>
+        <item>@string/unit_2</item>
+        <item>@string/unit_3</item>
+        <item>@string/unit_4</item>
+        <item>@string/unit_5</item>
+        <item>@string/unit_6</item>
+        <item>@string/unit_7</item>
+        <item>@string/unit_8</item>
+        <item>@string/unit_9</item>
+        <item>@string/unit_10</item>
+        <item>@string/unit_11</item>
+        <item>@string/unit_12</item>
+        <item>@string/unit_13</item>
+        <item>@string/unit_14</item>
+        <item>@string/unit_15</item>
+        <item>@string/unit_16</item>
+        <item>@string/unit_17</item>
+        <item>@string/unit_18</item>
+        <item>@string/unit_19</item>
+        <item>@string/unit_20</item>
+        <item>@string/unit_21</item>
+        <item>@string/unit_22</item>
+        <item>@string/unit_23</item>
+        <item>@string/unit_24</item>
+    </string-array>
+    
+</resources>
