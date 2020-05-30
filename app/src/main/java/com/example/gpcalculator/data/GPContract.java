@@ -26,6 +26,7 @@ public final class GPContract {
         public static final String COLUMN_GRADES = "grades";
         public static final String COLUMN_GP = "gp";
         public static final String COLUMN_TU = "tu";
+        public static final String COLUMN_SEMESTER = "semester";
         public static final String COLUMN_DETAILS = "details";
 
     }
@@ -46,7 +47,7 @@ public final class GPContract {
         public static final String KEY_GRADES_STAT = "Stat";
         public static final String KEY_CALCULATED_GP = "GP";
         public static final String KEY_MODE = "Mode";
-        public static final String KEY_RAW_USER_INPUTS = "User Inputs";
+        public static final String KEY_INIT_SEMESTER = "InitSemester";
 
         public static int getGradePoint(String grade) {
             switch (grade){
@@ -92,9 +93,18 @@ public final class GPContract {
             return ret;
         }
 
-        public static String extractDetailsFromUri(Uri uri) {
-            String uriStr = uri.toString();
-            return uriStr.substring(uriStr.indexOf(GPConstants.STRING_SPLIT));
+        public static String[] extractExtrasFromUri(Uri uri) {
+            String uriString = uri.toString();
+
+            String uriAppendedText = uriString.substring(uriString.indexOf(GPConstants.STRING_SPLIT));
+
+            int lastIndex = uriAppendedText.lastIndexOf(GPConstants.STRING_SPLIT);
+
+            String details = uriAppendedText.substring(0, lastIndex);
+
+            String semester = uriAppendedText.substring(lastIndex + 3);
+
+            return new String [] {details, semester};
         }
 
         public static String getGradeClass(double gp) {

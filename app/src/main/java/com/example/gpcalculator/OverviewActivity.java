@@ -17,6 +17,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.gpcalculator.data.GPContract.GPEntry;
 import com.example.gpcalculator.data.GPContract;
 
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class OverviewActivity extends AppCompatActivity {
     double GP;
     String mSession, mSemester;
     Uri mUri;
-    String mInitialDetailsToEdit;
+    String mInitialDetailsToEdit, mInitSemester;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,11 +53,9 @@ public class OverviewActivity extends AppCompatActivity {
             mTotalUnits = i.getIntExtra(GPConstants.KEY_TOTAL_UNITS, 0);
             String stat = i.getStringExtra(GPConstants.KEY_GRADES_STAT);
 
-            final String details = GPContract.GPConstants.STRING_SPLIT +mLevel
-                    + GPContract.GPConstants.STRING_SPLIT + mSession
-                    + GPContract.GPConstants.STRING_SPLIT+ mSemester;
+            final String details = GPConstants.STRING_SPLIT +mLevel+ GPConstants.STRING_SPLIT +mSession;
 
-            mUri = Uri.withAppendedPath(GPContract.GPEntry.CONTENT_URI, details);
+            mUri = Uri.withAppendedPath(GPEntry.CONTENT_URI, details + GPConstants.STRING_SPLIT +mSemester);
 
             String mode = i.getStringExtra(GPConstants.KEY_MODE);
 
@@ -73,6 +72,8 @@ public class OverviewActivity extends AppCompatActivity {
                 setTitle(R.string.edit);
 
                 mInitialDetailsToEdit = i.getStringExtra(GPConstants.KEY_INIT_DETAILS);
+                mInitSemester = i.getStringExtra(GPConstants.KEY_INIT_SEMESTER);
+
                 saveUpdateEditButton.setOnClickListener(updateListener);
 
             } else if (mode.equals(GPConstants.STRING_VIEW_MODE)) {
@@ -110,6 +111,7 @@ public class OverviewActivity extends AppCompatActivity {
         public void onClick(View v) {
 
             Intent i = new Intent(OverviewActivity.this, GPCalcActivity.class);
+            i.putExtra(GPConstants.KEY_SEMESTER, mSemester);
             i.setData(mUri);
 
             startActivity(i);
@@ -120,28 +122,31 @@ public class OverviewActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
 
-            final String details = GPConstants.extractDetailsFromUri(mUri);
+            // details is a combination of Level and Session
+            final String details = GPConstants.extractExtrasFromUri(mUri)[0];
+
             String courses = "";
             String units = "";
             String grades = "";
             int numberOfGrades = mGrades.size();
 
-            // Loop through the Grades
+            // Extract all the grades
             for (int i = 0; i < numberOfGrades; i++) {
                 Grade grade = mGrades.get(i);
-                courses += GPContract.GPConstants.STRING_SPLIT + grade.getCourse();
-                units += GPContract.GPConstants.STRING_SPLIT + grade.getUnit();
-                grades += GPContract.GPConstants.STRING_SPLIT + grade.getGrade();
+                courses += GPConstants.STRING_SPLIT + grade.getCourse();
+                units += GPConstants.STRING_SPLIT + grade.getUnit();
+                grades += GPConstants.STRING_SPLIT + grade.getGrade();
             }
 
             // Initialise content values and put the appropriate pairs
             final ContentValues values = new ContentValues();
-            values.put(GPContract.GPEntry.COLUMN_COURSES, courses);
-            values.put(GPContract.GPEntry.COLUMN_UNITS, units);
-            values.put(GPContract.GPEntry.COLUMN_GRADES, grades);
-            values.put(GPContract.GPEntry.COLUMN_DETAILS, details);
-            values.put(GPContract.GPEntry.COLUMN_GP, GP);
-            values.put(GPContract.GPEntry.COLUMN_TU, Grade.getTotalUnits());
+            values.put(GPEntry.COLUMN_COURSES, courses);
+            values.put(GPEntry.COLUMN_UNITS, units);
+            values.put(GPEntry.COLUMN_GRADES, grades);
+            values.put(GPEntry.COLUMN_DETAILS, details);
+            values.put(GPEntry.COLUMN_GP, GP);
+            values.put(GPEntry.COLUMN_TU, Grade.getTotalUnits());
+            values.put(GPEntry.COLUMN_SEMESTER, mSemester);
 
             // Insert the value in the db
             Uri uriCopy = getContentResolver().insert(mUri, values);
@@ -156,106 +161,6 @@ public class OverviewActivity extends AppCompatActivity {
                 // When uri's details is already in the db
                 showDialogForUpdate(values, details);
             }
-
-                /*else {
-                // When mode is Edit
-                // Hence, updating is required
-
-                if (details.equals(mInitialDetailsToEdit)) {
-
-                    // When the initial detail is same as current details
-                    // Update the corresponding rows with the values
-                    int noOfRowsUpdated = getContentResolver()
-                            .update(mUri, values, GPContract.GPEntry.COLUMN_DETAILS +"= ?", new String[] {details} );
-
-                    if (noOfRowsUpdated > 0) {
-                        finish();
-                    }
-
-                } else{
-
-                    // When the current detail differs
-                    // Check to see if a row with this detail already exist
-                    // mUri
-                    Uri uriForCurrentDetails = Uri.withAppendedPath(GPContract.GPEntry.CONTENT_URI, details);
-
-                    // Check if the current details already exist in the db
-                    Cursor c = getContentResolver().query(uriForCurrentDetails,
-                            new String[] {GPContract.GPEntry._ID},
-                            null,
-                            null,
-                            null);
-
-                    // When the new defined details already exist
-                    if (c.getCount() == 1) {
-                        // TODO: I have to delete initial details row
-                        // TODO: Update the current details row
-                        // TODO: This decision depends on the AlertDialog user input
-                        // Create an AlertDialog.Builder and set the message, and click listeners
-                        // for the positive and negative buttons on the dialog.
-                        AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                        builder.setMessage(R.string.details_already_exist);
-
-                        builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-
-                                // Delete the initial details row
-                                // Update the current details row
-                                int rowDeleted = getContentResolver().delete(mUri, GPContract.GPEntry.COLUMN_DETAILS +"= ?", new String[] { mInitialDetailsToEdit } );
-
-                                if (rowDeleted > 0) {
-                                    int noOfRowsUpdated = getContentResolver().update(mUri, values, GPContract.GPEntry.COLUMN_DETAILS +"= ?", new String[] { details } );
-
-                                    if (noOfRowsUpdated > 0) {
-                                        finish();
-                                    } else{
-                                        Log.i("###", "Update? Updating not successful!");
-                                    }
-
-                                } else{
-                                    Log.i("###", "Update? Deleting not successful!");
-                                }
-                            }
-                        });
-
-                        builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                // User clicked the "Keep editing" button, so dismiss the dialog
-                                // and continue editing the pet.
-                                if (dialog != null) {
-                                    dialog.dismiss();
-                                }
-                            }
-                        });
-
-                        // Create and show the AlertDialog
-                        AlertDialog alertDialog = builder.create();
-                        alertDialog.show();
-                    }
-                    else{
-                        // Current details doesn't exist yet
-                        // Initial details needs to be updated to a new details
-
-                        int rowDeleted = getContentResolver().delete(mUri, GPContract.GPEntry.COLUMN_DETAILS +"= ?", new String[] { mInitialDetailsToEdit } );
-
-                        if (rowDeleted > 0) {
-
-                            mUri = getContentResolver().insert(mUri, values);
-
-                            if (mUri != null) {
-                                finish();
-                            } else{
-                                Log.i("###", "Update? Inserting not successful!");
-                            }
-                        } else{
-                            Log.i("###", "Update? Inserting not successful!");
-                        }
-                    }
-
-                    c.close();
-
-                }*/
         }
     };
 
@@ -264,13 +169,11 @@ public class OverviewActivity extends AppCompatActivity {
         public void onClick(View v) {
             // Putting the level first, followed by session and the semester
             // Helps in easy sorting of the grades.
-            final String details = GPContract.GPConstants.STRING_SPLIT +mLevel
-                    + GPContract.GPConstants.STRING_SPLIT + mSession
-                    + GPContract.GPConstants.STRING_SPLIT+ mSemester;
+            final String details = GPConstants.STRING_SPLIT +mLevel+ GPConstants.STRING_SPLIT + mSession;
 
             // Initialise selection arguments and Uri
             //mSelectionArgs = new String[]{details};
-            mUri = Uri.withAppendedPath(GPContract.GPEntry.CONTENT_URI, details);
+            mUri = Uri.withAppendedPath(GPContract.GPEntry.CONTENT_URI, details + GPConstants.STRING_SPLIT +mSemester);
 
             String courses = "";
             String units = "";
@@ -287,18 +190,19 @@ public class OverviewActivity extends AppCompatActivity {
 
             // Initialise content values and put the appropriate pairs
             final ContentValues values = new ContentValues();
-            values.put(GPContract.GPEntry.COLUMN_COURSES, courses);
-            values.put(GPContract.GPEntry.COLUMN_UNITS, units);
-            values.put(GPContract.GPEntry.COLUMN_GRADES, grades);
-            values.put(GPContract.GPEntry.COLUMN_DETAILS, details);
-            values.put(GPContract.GPEntry.COLUMN_GP, GP);
-            values.put(GPContract.GPEntry.COLUMN_TU, Grade.getTotalUnits());
+            values.put(GPEntry.COLUMN_COURSES, courses);
+            values.put(GPEntry.COLUMN_UNITS, units);
+            values.put(GPEntry.COLUMN_GRADES, grades);
+            values.put(GPEntry.COLUMN_DETAILS, details);
+            values.put(GPEntry.COLUMN_GP, GP);
+            values.put(GPEntry.COLUMN_TU, Grade.getTotalUnits());
+            values.put(GPEntry.COLUMN_SEMESTER, mSemester);
 
             if (details.equals(mInitialDetailsToEdit)) {
                 // When the initial detail is same as current details
                 // Update the corresponding rows with the values
                 int noOfRowsUpdated = getContentResolver()
-                        .update(mUri, values, GPContract.GPEntry.COLUMN_DETAILS +"= ?", new String[] {details} );
+                        .update(mUri, values, GPEntry.COLUMN_DETAILS +"= ?", new String[] {details} );
 
                 if (noOfRowsUpdated > 0) {
                     goHome();
@@ -308,7 +212,6 @@ public class OverviewActivity extends AppCompatActivity {
 
                 // When the current detail differs
                 // Check to see if a row with this detail already exist
-
                 // Check if the current details already exist in the db
                 Cursor c = getContentResolver().query(mUri,
                         new String[] {GPContract.GPEntry._ID},
@@ -318,9 +221,6 @@ public class OverviewActivity extends AppCompatActivity {
 
                 // When the new defined details already exist
                 if (c.getCount() == 1) {
-                    // TODO: I have to delete initial details row
-                    // TODO: Update the current details row
-                    // TODO: This decision depends on the AlertDialog user input
                     // Create an AlertDialog.Builder and set the message, and click listeners
                     // for the positive and negative buttons on the dialog.
                     AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
@@ -370,7 +270,7 @@ public class OverviewActivity extends AppCompatActivity {
                         mUri = getContentResolver().insert(mUri, values);
 
                         if (mUri != null) {
-                            finish();
+                            goHome();
                         } else{
                             Log.i("###", "Update? Inserting not successful!");
                         }

@@ -63,12 +63,13 @@ public class GPProvider extends ContentProvider {
                         null); // orders the returned rows by details);
                 break;
             case GP_ONE:
-                String details = GPConstants.extractDetailsFromUri(uri);
+                String newSelection = GPEntry.COLUMN_DETAILS +" = ? AND " + GPEntry.COLUMN_SEMESTER +"= ?";
+                String[] detailsAndSemester = GPConstants.extractExtrasFromUri(uri);
 
                 cursor = db.query(GPEntry.TABLE_NAME,
                         null,
-                        GPEntry.COLUMN_DETAILS +" = ?",
-                        new String[] { details },
+                        newSelection,
+                        detailsAndSemester,
                         null,
                         null,
                         null);
@@ -95,22 +96,23 @@ public class GPProvider extends ContentProvider {
         // Get writeable database
         SQLiteDatabase database = mDbHelper.getWritableDatabase();
 
-        String details = GPConstants.extractDetailsFromUri(uri);
+        String newSelection = GPEntry.COLUMN_DETAILS +" = ? AND " + GPEntry.COLUMN_SEMESTER +"= ?";
+        String[] detailsAndSemester = GPConstants.extractExtrasFromUri(uri);
 
         // This query returns a cursor which help when confirm
         // if a GP is already available for the selected session/semester/level
         // With a limit = "1, the amount of time required is subtly reduced
         Cursor cursor = database.query(GPEntry.TABLE_NAME,
                 new String[] {GPEntry._ID},
-                GPEntry.COLUMN_DETAILS +" = ?",
-                new String[] { details },
+                newSelection,
+                detailsAndSemester,
                 null,
                 null,
                 null,
                 "1");
 
         if (cursor.getCount() == 0) {
-            // New session/semester/level is being inserted
+            // New session/semester is being inserted
             // Insert the new gp with the given values
             long id = database.insert(GPEntry.TABLE_NAME, null, values);
 
@@ -123,27 +125,27 @@ public class GPProvider extends ContentProvider {
             getContext().getContentResolver().notifyChange(uri, null);
             return uri;
         } else {
+
+            // There's an existing details
             return null;
         }
 
     }
 
     @Override
-    public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
+    public int delete(@NonNull Uri uri, @Nullable String selection,
+                      @Nullable String[] selectionArgs) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
-        switch (sUriMatcher.match(uri)) {
-            case GP_ONE:
-                int rowTotal = db.delete(GPEntry.TABLE_NAME, selection, selectionArgs);
-                getContext().getContentResolver().notifyChange(uri, null);
-                return rowTotal;
-        }
+        int rowTotal = db.delete(GPEntry.TABLE_NAME, selection, selectionArgs);
+        getContext().getContentResolver().notifyChange(uri, null);
 
-        return 0;
+        return rowTotal;
     }
 
     @Override
-    public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
+    public int update(@NonNull Uri uri, @Nullable ContentValues values,
+                      @Nullable String selection, @Nullable String[] selectionArgs) {
         // Get writeable database
         SQLiteDatabase database = mDbHelper.getWritableDatabase();
 

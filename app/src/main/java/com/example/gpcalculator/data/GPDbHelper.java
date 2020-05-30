@@ -10,7 +10,7 @@ import com.example.gpcalculator.data.GPContract.GPEntry;
 public class GPDbHelper extends SQLiteOpenHelper {
     // database properties
     private static final String DATABASE_NAME = "gp.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     // Create table sql code
     private static final String SQL_CREATE_TABLE =
@@ -21,6 +21,7 @@ public class GPDbHelper extends SQLiteOpenHelper {
                     + GPEntry.COLUMN_GRADES +" TEXT, "
                     + GPEntry.COLUMN_GP + " REAL, "
                     + GPEntry.COLUMN_TU + " INT, "
+                    + GPEntry.COLUMN_SEMESTER + " TEST, "
                     + GPEntry.COLUMN_DETAILS +" TEXT" +")";
 
     // Delete table sql code

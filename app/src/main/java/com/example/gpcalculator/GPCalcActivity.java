@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -69,7 +70,9 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
             }
         });
 
-        mUri = getIntent().getData();
+        Intent i = getIntent();
+
+        mUri = i.getData();
 
         if (mUri == null) {
 
@@ -213,7 +216,6 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
 
         // Start OverviewActivity
         showOverview();
-
     }
 
     private void extractRawInputs() {
@@ -275,8 +277,7 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
         startActivity(i);
     }
 
-    private void setupDetailsSpinners (String level, String session, String semester, String
-    totalUnits){
+    private void setupDetailsSpinners (String level, String session, String semester, String totalUnits){
         // Setting up the ArrayAdapter
         ArrayAdapter levelSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.level_option, android.R.layout.simple_spinner_item);
         ArrayAdapter sessionSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.session_option, android.R.layout.simple_spinner_item);
@@ -361,21 +362,13 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
     @Override
     public Loader<Cursor> onCreateLoader ( int id, @Nullable Bundle args){
 
-        // Called when the Loader is first created
-        // When done executing, onLoadFinished is called
-        // Projection is null since all the columns are selected
-        // Filter results WHERE "details" = mUri.toString()
-
         return new CursorLoader(getApplicationContext(), mUri, null, null, null, null);
     }
 
     @Override
-    public void onLoadFinished (@NonNull Loader < Cursor > loader, Cursor cursor){
+    public void onLoadFinished (@NonNull Loader <Cursor> loader, Cursor cursor){
 
-        // When onLoadFinished is called more than once
-        // mFormContainer.removeAllViews();
-
-        if (cursor != null) {
+        if (cursor != null && mFormContainer.getChildCount() == 0) {
             // Move to first
             cursor.moveToFirst();
 
@@ -384,8 +377,9 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
             String courses = cursor.getString(cursor.getColumnIndex(GPEntry.COLUMN_COURSES));
             String units = cursor.getString(cursor.getColumnIndex(GPEntry.COLUMN_UNITS));
             String grades = cursor.getString(cursor.getColumnIndex(GPEntry.COLUMN_GRADES));
+            String semester = cursor.getString(cursor.getColumnIndex(GPEntry.COLUMN_SEMESTER));
 
-            mInitialDetailsToEdit = GPConstants.extractDetailsFromUri(mUri);
+            mInitialDetailsToEdit = GPConstants.extractExtrasFromUri(mUri)[0];
 
             // For these arrays, the index 0 is ""
             // Arrays (each with equal length) for courses, units and grades
@@ -409,7 +403,7 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
             // Setup spinners for Level, Session, Semester and Total Units
             setupDetailsSpinners(detailsArray[1], // Level
                     detailsArray[2], // session
-                    detailsArray[3], // semester
+                    semester, // semester
                     "" + totalUnits); // Total Units
         }
     }
