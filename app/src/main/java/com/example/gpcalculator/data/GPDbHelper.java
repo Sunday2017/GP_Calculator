@@ -21,7 +21,7 @@ public class GPDbHelper extends SQLiteOpenHelper {
                     + GPEntry.COLUMN_GRADES +" TEXT, "
                     + GPEntry.COLUMN_GP + " REAL, "
                     + GPEntry.COLUMN_TU + " INT, "
-                    + GPEntry.COLUMN_SEMESTER + " TEST, "
+                    + GPEntry.COLUMN_SEMESTER + " TEXT, "
                     + GPEntry.COLUMN_DETAILS +" TEXT" +")";
 
     // Delete table sql code
