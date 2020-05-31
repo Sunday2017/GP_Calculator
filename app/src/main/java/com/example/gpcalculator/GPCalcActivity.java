@@ -14,7 +14,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -34,20 +33,21 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
     private Uri mUri;
     private String mMode, mInitialDetailsToEdit;
 
+    @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gpcalc);
 
         // Initialising variables
-        mFormContainer = (LinearLayout) findViewById(R.id.form_container);
-        mLevelSpinner = (Spinner) findViewById(R.id.level_spinner);
-        mSessionSpinner = (Spinner) findViewById(R.id.session_spinner);
-        mSemesterSpinner = (Spinner) findViewById(R.id.semester_spinner);
-        mTotalUnitsSpinner = (Spinner) findViewById(R.id.total_units_spinner);
-        Button addRowButton = (Button) findViewById(R.id.add_row_btn);
-        Button calcButton = (Button) findViewById(R.id.calc_gp);
-        Button delRowButton = (Button) findViewById(R.id.delete_row_btn);
+        mFormContainer = findViewById(R.id.form_container);
+        mLevelSpinner = findViewById(R.id.level_spinner);
+        mSessionSpinner = findViewById(R.id.session_spinner);
+        mSemesterSpinner = findViewById(R.id.semester_spinner);
+        mTotalUnitsSpinner = findViewById(R.id.total_units_spinner);
+        Button addRowButton = findViewById(R.id.add_row_btn);
+        Button calcButton = findViewById(R.id.calc_gp);
+        Button delRowButton = findViewById(R.id.delete_row_btn);
 
         // Setting Listeners on buttons
         addRowButton.setOnClickListener(new View.OnClickListener() {
@@ -73,29 +73,40 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
         Intent i = getIntent();
 
         mUri = i.getData();
+        boolean isUriNull = mUri == null;
 
-        if (mUri == null) {
-
-            // Set the title
+        if (isUriNull) {
+            // Set the title and the mode
             this.setTitle(R.string.add_new);
-
-            // Set the mode
             mMode = getResources().getString(R.string.add_new);
-
-            // Call method to setUpSpinners by populating 'em with the required data
-            setupDetailsSpinners(GPConstants.NONE, GPConstants.NONE, GPConstants.NONE, GPConstants.NONE);
-
-            // Add to first row {courses, units, grades} to the container}
-            addRowToContainer("", GPConstants.NONE, GPConstants.NONE);
-        } else {
-
-            // Set the title
+        }else{
+            // Set the title and the mode
             this.setTitle(R.string.edit);
-
-            // Set the mode
             mMode = getResources().getString(R.string.edit);
+        }
 
-            getSupportLoaderManager().initLoader(1, null, this);
+        setupDetailsSpinners(GPConstants.NONE, GPConstants.NONE, GPConstants.NONE, GPConstants.NONE);
+
+        if (savedInstanceState == null) {
+            if (isUriNull) {
+                // Add to first row {courses, units, grades} to the container}
+                addRowToContainer("", GPConstants.NONE, GPConstants.NONE);
+            } else {
+                getSupportLoaderManager().initLoader(1, null, this);
+            }
+        } else {
+            mGrades = savedInstanceState.getParcelableArrayList(GPConstants.KEY_GRADES);
+
+            if (mGrades != null) {
+                for (Grade g : mGrades) {
+                    String course = g.getCourse();
+                    int formattedUnit = g.getUnit();
+                    String score = g.getGrade();
+                    String unit = formattedUnit == 0 ? GPConstants.NONE : String.valueOf(formattedUnit);
+
+                    addRowToContainer(course, unit, score);
+                }
+            }
         }
     }
 
@@ -103,11 +114,11 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        // Need to persist
-        // mMode, mUri and User's input choices
+        ArrayList<Grade> rawUserInputs = extractRawInputs();
 
         outState.putString(GPConstants.KEY_MODE, mMode);
         outState.putString(GPConstants.KEY_INIT_DETAILS, mInitialDetailsToEdit);
+        outState.putParcelableArrayList(GPConstants.KEY_GRADES, rawUserInputs);
     }
 
     private void delRowFromContainer() {
@@ -147,7 +158,7 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
         int childCount = mFormContainer.getChildCount();
 
         int cumulativeUnit = 0;
-        String allGradesString = "";
+        StringBuilder allGradesString = new StringBuilder();
 
         // Initialise the total GradePoint obtained
         double totalGradePoint = 0;
@@ -165,25 +176,25 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
             String unit = unitSpinner.getSelectedItem().toString();
             String grade = gradeSpinner.getSelectedItem().toString();
 
-            // Making sure every course has a name (nonn empty), unit isn't NONE, grade isn't NONE
+            // Making sure every course has a name (non empty), unit isn't NONE, grade isn't NONE
             if (course.equals("") || unit.equals(GPConstants.NONE) || grade.equals(GPConstants.NONE)) {
                 Toast.makeText(this, "Some column(s) is empty/none", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             // Restricting the input ###
-            if (course.indexOf(GPConstants.STRING_SPLIT) > -1) {
+            if (course.contains(GPConstants.STRING_SPLIT)) {
                 Toast.makeText(this, "Entry ### is restricted", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             int actualUnit = Integer.parseInt(unit);
             cumulativeUnit += actualUnit;
-            allGradesString += GPConstants.STRING_SPLIT + grade;
+            allGradesString.append(GPConstants.STRING_SPLIT).append(grade);
 
             // get the gradePoint corresponding to each grade obtained;  A:5, B:4, ...
             int gradePoint = GPConstants.getGradePoint(grade);
-            // Cumulate the total
+            // Cummulate the total
             totalGradePoint += actualUnit * gradePoint;
 
             // Add extracted grade details
@@ -191,7 +202,7 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
         }
 
         int totalUnitsInt = Integer.parseInt(totalUnits);
-        String stat = GPConstants.getGradesStat(allGradesString);
+        String stat = GPConstants.getGradesStat(allGradesString.toString());
 
         // Set the static variables of the class: level, session, semester, totalUnits, stat
         Grade.setLevel(Integer.parseInt(level));
@@ -218,15 +229,9 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
         showOverview();
     }
 
-    private void extractRawInputs() {
-        String level = mLevelSpinner.getSelectedItem().toString();
-        String session = mSessionSpinner.getSelectedItem().toString();
-        String semester = mSemesterSpinner.getSelectedItem().toString();
-        String totalUnits = mTotalUnitsSpinner.getSelectedItem().toString();
+    private ArrayList<Grade> extractRawInputs() {
 
-        // Initialising the List<Grades>
-        // Making sure the list of grades is empty before adding grades
-        mGrades = new ArrayList<>();
+        ArrayList<Grade> rawUserInputs = new ArrayList<>();
 
         // get FormContainer child count
         int childCount = mFormContainer.getChildCount();
@@ -247,17 +252,26 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
             int actualUnit = unit.equals(GPConstants.NONE) ? 0 : Integer.parseInt(unit);
 
             // Add extracted grade details
-            mGrades.add(new Grade(course, actualUnit, grade));
+            rawUserInputs.add(new Grade(course, actualUnit, grade));
         }
 
-        int totalUnitsInt = totalUnits.equals(GPConstants.NONE) ? 0 : Integer.parseInt(totalUnits);
-        int levelInt = level.equals(GPConstants.NONE) ? 0 : Integer.parseInt(level);
+        String strLevel = mLevelSpinner.getSelectedItem().toString();
+        String strSession = mSessionSpinner.getSelectedItem().toString();
+        String strSemester = mSemesterSpinner.getSelectedItem().toString();
+        String strTotalUnits = mTotalUnitsSpinner.getSelectedItem().toString();
 
-        // Set the static variables of the class: level, session, semester, totalUnits, stat
-        Grade.setLevel(levelInt);
-        Grade.setSession(session);
-        Grade.setSemester(semester);
-        Grade.setTotalUnits(totalUnitsInt);
+        int totalUnits = strTotalUnits
+                .equals(GPConstants.NONE) ? 0 : Integer.parseInt(strTotalUnits);
+
+        int level = strLevel
+                .equals(GPConstants.NONE) ? 0 : Integer.parseInt(strLevel);
+
+        Grade.setLevel(level);
+        Grade.setTotalUnits(totalUnits);
+        Grade.setSemester(strSemester);
+        Grade.setSession(strSession);
+
+        return rawUserInputs;
     }
 
     private void showOverview () {
@@ -277,7 +291,8 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
         startActivity(i);
     }
 
-    private void setupDetailsSpinners (String level, String session, String semester, String totalUnits){
+    private void setupDetailsSpinners (String level, String session,
+                                       String semester, String totalUnits){
         // Setting up the ArrayAdapter
         ArrayAdapter levelSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.level_option, android.R.layout.simple_spinner_item);
         ArrayAdapter sessionSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.session_option, android.R.layout.simple_spinner_item);

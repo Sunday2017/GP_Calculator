@@ -3,7 +3,6 @@ package com.example.gpcalculator.data;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DataSetObserver;
-import android.view.ViewGroup;
 
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -14,18 +13,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public abstract class AbstractCustomAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {
 
-    protected Context mContext;
-
     private Cursor mCursor;
 
     private boolean mDataValid;
 
     private int mRowIdColumn;
 
-    private DataSetObserver mDataSetObserver;
+    private final DataSetObserver mDataSetObserver;
 
-    public AbstractCustomAdapter(Context context, Cursor cursor) {
-        mContext = context;
+    public AbstractCustomAdapter(Cursor cursor) {
         mCursor = cursor;
         mDataValid = cursor != null;
 
@@ -66,11 +62,6 @@ public abstract class AbstractCustomAdapter<VH extends RecyclerView.ViewHolder> 
     }
 
     public abstract void onBindViewHolder(VH viewHolder, Cursor cursor);
-
-    @Override
-    public VH onCreateViewHolder(ViewGroup parent, int viewType) {
-        return null;
-    }
 
     @Override
     public void onBindViewHolder(VH viewHolder, int position) {
@@ -131,14 +122,14 @@ public abstract class AbstractCustomAdapter<VH extends RecyclerView.ViewHolder> 
     }
 
 
-    public void setDataValid(boolean mDataValid) {
+    private void setDataValid(boolean mDataValid) {
         this.mDataValid = mDataValid;
     }
 
-    private class NotifyingDataSetObserver extends DataSetObserver {
-        private RecyclerView.Adapter adapter;
+    private static class NotifyingDataSetObserver extends DataSetObserver {
+        private final RecyclerView.Adapter adapter;
 
-        public NotifyingDataSetObserver(RecyclerView.Adapter adapter) {
+        NotifyingDataSetObserver(RecyclerView.Adapter adapter) {
             this.adapter = adapter;
         }
 

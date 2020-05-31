@@ -1,12 +1,7 @@
 package com.example.gpcalculator;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.CursorLoader;
-import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -15,7 +10,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,15 +22,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class MainActivity extends AppCompatActivity implements RecyclerViewCursorAdapter.RecyclerItemClickListener {
 
-    // Setting up global variables
-    FloatingActionButton mAddSemesterTextView;
-    RecyclerViewCursorAdapter mAdapter;
-    TextView mEmptyViewForList;
-    RecyclerView recyclerView;
-
-    double CGPA;
-
-    private String KEY_SAVE_CGPA = "User CGPA";
+    private RecyclerViewCursorAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,8 +30,9 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         setContentView(R.layout.activity_main);
 
         // Initialising variables
-        mAddSemesterTextView = (FloatingActionButton) findViewById(R.id.add_new_semester);
-        mEmptyViewForList = (TextView) findViewById(R.id.empty_view);
+        // Setting up global variables
+        FloatingActionButton mAddSemesterTextView = findViewById(R.id.add_new_semester);
+        // mEmptyViewForList = findViewById(R.id.empty_view);
 
         // Click listener for the floating action button
         mAddSemesterTextView.setOnClickListener(new View.OnClickListener() {
@@ -58,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         });
 
         // Initialise Recycler view
-        recyclerView = (RecyclerView) findViewById(R.id.list_item);
+        RecyclerView recyclerView = findViewById(R.id.list_item);
 
         // Setting the layout manager
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -67,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         recyclerView.setHasFixedSize(true);
 
         // Initialising and setting adapter
-        mAdapter = new RecyclerViewCursorAdapter(this, null, this);
+        mAdapter = new RecyclerViewCursorAdapter(null, this);
         recyclerView.setAdapter(mAdapter);
 
         mAdapter.notifyDataSetChanged();
@@ -75,14 +62,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         queryDatabase();
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        outState.putDouble(KEY_SAVE_CGPA, CGPA);
-    }
-
-    public void queryDatabase() {
+    private void queryDatabase() {
 
         // Query DB for the whole table
         Cursor c = getContentResolver().query(GPEntry.CONTENT_URI, null, null, null, null);
@@ -92,10 +72,10 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
 
 
    // @Override
-    public void visualiseCursorDetails(Cursor data) {
+    private void visualiseCursorDetails(Cursor data) {
 
-        TextView cumulativeView = (TextView) findViewById(R.id.cumulative_view);
-        TextView gradeClassTV = (TextView) findViewById(R.id.gp_class);
+        TextView cumulativeView = findViewById(R.id.cumulative_view);
+        TextView gradeClassTV = findViewById(R.id.gp_class);
 
         /*
         * COMPUTING CGPA
@@ -122,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
             }
 
             // Evaluate the CGPA
-            CGPA = (double) Math.round(cumulative / overallTotalUnits * 100) / 100;
+            double CGPA = (double) Math.round(cumulative / overallTotalUnits * 100) / 100;
 
             // What class is the CGPA in?
             String gradeClass = GPConstants.getGradeClass(CGPA);
@@ -135,12 +115,6 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         // Change cursor of adapter
         mAdapter.changeCursor(data);
     }
-
-
-    /* @Override
-    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-        mAdapter.swapCursor(null);
-    }*/
 
     @Override
     public void onItemClick(Cursor cursor, int position) {

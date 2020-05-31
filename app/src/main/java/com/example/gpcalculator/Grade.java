@@ -9,9 +9,9 @@ public class Grade implements Parcelable {
     private static double GP;
     private static String stat;
 
-    private String mCourse;
-    private int mUnit;
-    private String mGrade;
+    private final String mCourse;
+    private final int mUnit;
+    private final String mGrade;
 
     public Grade(String course, int unit, String grade) {
         this.mCourse = course;
@@ -85,7 +85,7 @@ public class Grade implements Parcelable {
     }
 
 
-    protected Grade(Parcel in) {
+    private Grade(Parcel in) {
         mCourse = in.readString();
         mUnit = in.readInt();
         mGrade = in.readString();

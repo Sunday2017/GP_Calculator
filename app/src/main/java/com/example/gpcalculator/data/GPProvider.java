@@ -6,18 +6,19 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import com.example.gpcalculator.data.GPContract.GPEntry;
 import com.example.gpcalculator.data.GPContract.GPConstants;
 
 public class GPProvider extends ContentProvider {
 
-    GPDbHelper mDbHelper;
+    private GPDbHelper mDbHelper;
 
     // Code matcher for respective possible content uri
     private static final int GP_ALL = 100;
@@ -79,6 +80,7 @@ public class GPProvider extends ContentProvider {
         // Set the Notification Uri for the cursor
         // so we know what content uri the cursor was created for
         // if the data in the uri does change, then we know we need to update the cursor
+        assert cursor != null;
         cursor.setNotificationUri(getContext().getContentResolver(), uri);
 
         return cursor;
@@ -90,6 +92,7 @@ public class GPProvider extends ContentProvider {
         return null;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Nullable
     @Override
     public Uri insert(@NonNull Uri uri, @Nullable ContentValues values) {
@@ -123,9 +126,12 @@ public class GPProvider extends ContentProvider {
             // Notify all listener that the cursor/data has changed for the gp CONTENT URI
             // This primarily notifies the CursorAdapter class
             getContext().getContentResolver().notifyChange(uri, null);
+
+            cursor.close();
             return uri;
         } else {
 
+            cursor.close();
             // There's an existing details
             return null;
         }

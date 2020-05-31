@@ -20,17 +20,16 @@ import android.widget.Toast;
 import com.example.gpcalculator.data.GPContract.GPEntry;
 import com.example.gpcalculator.data.GPContract;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class OverviewActivity extends AppCompatActivity {
 
-    List<Grade> mGrades;
-    int mLevel, mTotalUnits;
-    double GP;
-    String mSession, mSemester;
-    Uri mUri;
-    String mInitialDetailsToEdit, mInitSemester;
+    private List<Grade> mGrades;
+    private int mLevel;
+    private double GP;
+    private String mSession, mSemester;
+    private Uri mUri;
+    private String mInitialDetailsToEdit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +47,7 @@ public class OverviewActivity extends AppCompatActivity {
             mLevel = i.getIntExtra(GPConstants.KEY_LEVEL, 0);
             mSemester = i.getStringExtra(GPConstants.KEY_SEMESTER);
             mSession = i.getStringExtra(GPConstants.KEY_SESSION);
-            mTotalUnits = i.getIntExtra(GPConstants.KEY_TOTAL_UNITS, 0);
+            int mTotalUnits = i.getIntExtra(GPConstants.KEY_TOTAL_UNITS, 0);
             String stat = i.getStringExtra(GPConstants.KEY_GRADES_STAT);
 
             final String details = GPConstants.STRING_SPLIT +mLevel+ GPConstants.STRING_SPLIT +mSession;
@@ -57,6 +56,7 @@ public class OverviewActivity extends AppCompatActivity {
 
             String mode = i.getStringExtra(GPConstants.KEY_MODE);
 
+            assert mode != null;
             if (mode.equals(getResources().getString(R.string.add_new))) {
 
                 saveUpdateEditButton.setText(R.string.save_btn);
@@ -70,7 +70,6 @@ public class OverviewActivity extends AppCompatActivity {
                 setTitle(R.string.edit);
 
                 mInitialDetailsToEdit = i.getStringExtra(GPConstants.KEY_INIT_DETAILS);
-                mInitSemester = i.getStringExtra(GPConstants.KEY_INIT_SEMESTER);
 
                 saveUpdateEditButton.setOnClickListener(updateListener);
 
@@ -91,7 +90,6 @@ public class OverviewActivity extends AppCompatActivity {
             TextView statTextView = findViewById(R.id.user_grades_stat);
 
             String gpClassGrade = GPConstants.getGradeClass(GP);
-
             String format = "%s %s";
 
             gpTextView.setText(String.valueOf(GP));
@@ -107,7 +105,7 @@ public class OverviewActivity extends AppCompatActivity {
         //saveUpdateEditButton.setOnClickListener(onSaveListener);
     }
 
-    View.OnClickListener editListener = new View.OnClickListener() {
+    private final View.OnClickListener editListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
 
@@ -119,7 +117,7 @@ public class OverviewActivity extends AppCompatActivity {
         }
     };
 
-    View.OnClickListener onSaveListener = new View.OnClickListener() {
+    private final View.OnClickListener onSaveListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
 
@@ -165,7 +163,7 @@ public class OverviewActivity extends AppCompatActivity {
         }
     };
 
-    View.OnClickListener updateListener = new View.OnClickListener() {
+    private final View.OnClickListener updateListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             // Putting the level first, followed by session and the semester

@@ -49,7 +49,7 @@ public final class GPContract {
         public static final String KEY_CALCULATED_GP = "GP";
         public static final String KEY_MODE = "Mode";
         public static final String KEY_INIT_SEMESTER = "InitSemester";
-        public static final String KEY_GRADE = "Grade";
+        public static final String KEY_GRADES = "Grades";
 
         public static int getGradePoint(String grade) {
             switch (grade){
