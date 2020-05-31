@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public final class GPContract {
 
@@ -11,15 +12,15 @@ public final class GPContract {
     public GPContract() {}
 
 
-    public static final String CONTENT_AUTHORITY = "com.example.gpcalculator";
-    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" +CONTENT_AUTHORITY);
-    public static final String PATH_GP = "gp";
+    static final String CONTENT_AUTHORITY = "com.example.gpcalculator";
+    private static final Uri BASE_CONTENT_URI = Uri.parse("content://" +CONTENT_AUTHORITY);
+    static final String PATH_GP = "gp";
 
     public static final class GPEntry implements BaseColumns {
         /*the content_uri to access the gp data in the provider*/
         public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_GP);
 
-        public static final String TABLE_NAME = "gp";
+        static final String TABLE_NAME = "gp";
         public static final String _ID = BaseColumns._ID;
         public static final String COLUMN_COURSES = "courses";
         public static final String COLUMN_UNITS = "units";
@@ -48,6 +49,7 @@ public final class GPContract {
         public static final String KEY_CALCULATED_GP = "GP";
         public static final String KEY_MODE = "Mode";
         public static final String KEY_INIT_SEMESTER = "InitSemester";
+        public static final String KEY_GRADE = "Grade";
 
         public static int getGradePoint(String grade) {
             switch (grade){
@@ -68,7 +70,7 @@ public final class GPContract {
 
         public static String getGradesStat(String s) {
             char[] c = {'A', 'B', 'C', 'D', 'E', 'F'};
-            String  ret = "";
+            StringBuilder ret = new StringBuilder();
 
             for (char a : c) {
 
@@ -83,14 +85,14 @@ public final class GPContract {
                 if(count > 0) {
 
                     if (count == 1) {
-                        ret += count +""+a +" ";
+                        ret.append(count).append(a).append(" ");
                         continue;
                     }
-                    ret += count +""+ a +"'s ";
+                    ret.append(count).append(a).append("'s ");
                 }
             }
 
-            return ret;
+            return ret.toString();
         }
 
         public static String[] extractExtrasFromUri(Uri uri) {
@@ -126,9 +128,7 @@ public final class GPContract {
         public static int getPositionInSpinner(String value, String[] items) {
             ArrayList<String> itemsList = new ArrayList<>();
 
-            for(String item : items) {
-                itemsList.add(item);
-            }
+            Collections.addAll(itemsList, items);
 
             return itemsList.indexOf(value);
         }
