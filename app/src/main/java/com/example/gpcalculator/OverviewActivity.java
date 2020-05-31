@@ -38,11 +38,13 @@ public class OverviewActivity extends AppCompatActivity {
 
         Intent i = getIntent();
 
+        // ArrayList<Grade> dt = i.getParcelableArrayListExtra("GRADE");
+
         Button saveUpdateEditButton = findViewById(R.id.save_update_edit_btn);
 
         if (i != null) {
 
-            mGrades = i.getParcelableArrayListExtra(GPConstants.KEY_GRADE);
+            mGrades = i.getParcelableArrayListExtra("GRADE");
             GP = i.getDoubleExtra(GPConstants.KEY_CALCULATED_GP, 0);
             mLevel = i.getIntExtra(GPConstants.KEY_LEVEL, 0);
             mSemester = i.getStringExtra(GPConstants.KEY_SEMESTER);
@@ -94,9 +96,10 @@ public class OverviewActivity extends AppCompatActivity {
 
             gpTextView.setText(String.valueOf(GP));
             gpClassTextView.setText(gpClassGrade);
-            levelTextView.setText(String.format(format, getString(R.string.level), mLevel) );
+            levelTextView.setText(String.format(format, getString(R.string.level),  mLevel));
             sessionTextView.setText(String.format(format, getString(R.string.session), mSession));
-            semesterTextView.setText(String.format(format,getString(R.string.semester), mSemester));
+            semesterTextView.setText(
+                    String.format(format, getString(R.string.semester), mSemester));
             totalUnitsTextView.setText(
                     String.format(format, getString(R.string.total_units), mTotalUnits));
             statTextView.setText(String.format(format, getString(R.string.stat), stat));
@@ -218,69 +221,68 @@ public class OverviewActivity extends AppCompatActivity {
                         null,
                         null);
 
-                if (c != null) {
+                // When the new defined details already exist
+                assert c != null;
+                if (c.getCount() == 1) {
+                    // Create an AlertDialog.Builder and set the message, and click listeners
+                    // for the positive and negative buttons on the dialog.
+                    AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+                    builder.setMessage(R.string.details_already_exist);
 
-                    // When the new defined details already exist
-                    if (c.getCount() == 1) {
-                        // Create an AlertDialog.Builder and set the message, and click listeners
-                        // for the positive and negative buttons on the dialog.
-                        AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                        builder.setMessage(R.string.details_already_exist);
+                    builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
 
-                        builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
+                            // Delete the initial details row
+                            // Update the current details row
+                            int rowDeleted = getContentResolver().delete(mUri, GPContract.GPEntry.COLUMN_DETAILS +"= ?", new String[] { mInitialDetailsToEdit } );
 
-                                // Delete the initial details row
-                                // Update the current details row
-                                int rowDeleted = getContentResolver().delete(mUri, GPContract.GPEntry.COLUMN_DETAILS + "= ?", new String[]{mInitialDetailsToEdit});
+                            if (rowDeleted > 0) {
+                                int noOfRowsUpdated = getContentResolver().update(mUri, values, GPContract.GPEntry.COLUMN_DETAILS +"= ?", new String[] { details } );
 
-                                if (rowDeleted > 0) {
-                                    int noOfRowsUpdated = getContentResolver().update(mUri, values, GPContract.GPEntry.COLUMN_DETAILS + "= ?", new String[]{details});
-
-                                    if (noOfRowsUpdated > 0) {
-                                        Toast.makeText(OverviewActivity.this, "Updated successfully", Toast.LENGTH_SHORT).show();
-                                        goHome();
-                                    }
+                                if (noOfRowsUpdated > 0) {
+                                    Toast.makeText(OverviewActivity.this, "Updated successfully", Toast.LENGTH_SHORT).show();
+                                    goHome();
                                 }
                             }
-                        });
+                        }
+                    });
 
-                        builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                // User clicked the "Keep editing" button, so dismiss the dialog
-                                // and continue editing the pet.
-                                if (dialog != null) {
-                                    dialog.dismiss();
-                                }
+                    builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // User clicked the "Keep editing" button, so dismiss the dialog
+                            // and continue editing the pet.
+                            if (dialog != null) {
+                                dialog.dismiss();
                             }
-                        });
+                        }
+                    });
 
-                        // Create and show the AlertDialog
-                        AlertDialog alertDialog = builder.create();
-                        alertDialog.show();
-                    } else {
-                        // Current details doesn't exist yet
-                        // Initial details needs to be updated to a new details
+                    // Create and show the AlertDialog
+                    AlertDialog alertDialog = builder.create();
+                    alertDialog.show();
+                }
+                else{
+                    // Current details doesn't exist yet
+                    // Initial details needs to be updated to a new details
 
-                        int rowDeleted = getContentResolver().delete(mUri, GPContract.GPEntry.COLUMN_DETAILS + "= ?", new String[]{mInitialDetailsToEdit});
+                    int rowDeleted = getContentResolver().delete(mUri, GPContract.GPEntry.COLUMN_DETAILS +"= ?", new String[] { mInitialDetailsToEdit } );
 
-                        if (rowDeleted > 0) {
+                    if (rowDeleted > 0) {
 
-                            mUri = getContentResolver().insert(mUri, values);
+                        mUri = getContentResolver().insert(mUri, values);
 
-                            if (mUri != null) {
-                                goHome();
-                            } else {
-                                Log.i("###", "Update? Inserting not successful!");
-                            }
-                        } else {
+                        if (mUri != null) {
+                            goHome();
+                        } else{
                             Log.i("###", "Update? Inserting not successful!");
                         }
+                    } else{
+                        Log.i("###", "Update? Inserting not successful!");
                     }
-
-                    c.close();
                 }
+
+                c.close();
             }
         }
     };
