@@ -45,7 +45,7 @@ public class OverviewActivity extends AppCompatActivity {
         if (i != null) {
 
             // Get extras
-            mGrades = i.getParcelableArrayListExtra("GRADE");
+            mGrades = i.getParcelableArrayListExtra(GPConstants.KEY_GRADES);
             GP = i.getDoubleExtra(GPConstants.KEY_CALCULATED_GP, 0);
             mLevel = i.getIntExtra(GPConstants.KEY_LEVEL, 0);
             mSemester = i.getStringExtra(GPConstants.KEY_SEMESTER);
