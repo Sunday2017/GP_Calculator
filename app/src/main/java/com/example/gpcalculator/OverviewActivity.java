@@ -44,17 +44,20 @@ public class OverviewActivity extends AppCompatActivity {
 
         if (i != null) {
 
+            // Get extras
             mGrades = i.getParcelableArrayListExtra("GRADE");
             GP = i.getDoubleExtra(GPConstants.KEY_CALCULATED_GP, 0);
             mLevel = i.getIntExtra(GPConstants.KEY_LEVEL, 0);
             mSemester = i.getStringExtra(GPConstants.KEY_SEMESTER);
             mSession = i.getStringExtra(GPConstants.KEY_SESSION);
-            int mTotalUnits = i.getIntExtra(GPConstants.KEY_TOTAL_UNITS, 0);
+            int totalUnits = i.getIntExtra(GPConstants.KEY_TOTAL_UNITS, 0);
             String stat = i.getStringExtra(GPConstants.KEY_GRADES_STAT);
 
-            final String details = GPConstants.STRING_SPLIT +mLevel+ GPConstants.STRING_SPLIT +mSession;
+            String details = GPConstants.STRING_SPLIT +mLevel+
+                    GPConstants.STRING_SPLIT +mSession;
 
-            mUri = Uri.withAppendedPath(GPEntry.CONTENT_URI, details + GPConstants.STRING_SPLIT +mSemester);
+            mUri = Uri.withAppendedPath(GPEntry.CONTENT_URI,
+                    details + GPConstants.STRING_SPLIT +mSemester);
 
             String mode = i.getStringExtra(GPConstants.KEY_MODE);
 
@@ -83,29 +86,31 @@ public class OverviewActivity extends AppCompatActivity {
                 saveUpdateEditButton.setOnClickListener(editListener);
             }
 
-            TextView gpTextView = findViewById(R.id.calculated_gp);
-            TextView gpClassTextView = findViewById(R.id.gp_class);
-            TextView levelTextView = findViewById(R.id.user_level);
-            TextView sessionTextView = findViewById(R.id.user_session);
-            TextView semesterTextView = findViewById(R.id.user_semester);
-            TextView totalUnitsTextView = findViewById(R.id.user_total_units);
-            TextView statTextView = findViewById(R.id.user_grades_stat);
-
-            String gpClassGrade = GPConstants.getGradeClass(GP);
-            String format = "%s %s";
-
-            gpTextView.setText(String.valueOf(GP));
-            gpClassTextView.setText(gpClassGrade);
-            levelTextView.setText(String.format(format, getString(R.string.level),  mLevel));
-            sessionTextView.setText(String.format(format, getString(R.string.session), mSession));
-            semesterTextView.setText(
-                    String.format(format, getString(R.string.semester), mSemester));
-            totalUnitsTextView.setText(
-                    String.format(format, getString(R.string.total_units), mTotalUnits));
-            statTextView.setText(String.format(format, getString(R.string.stat), stat));
+            setViewsText(totalUnits, stat);
         }
+    }
 
-        //saveUpdateEditButton.setOnClickListener(onSaveListener);
+    private void setViewsText(int totalUnits, String stat) {
+        TextView gpTextView = findViewById(R.id.calculated_gp);
+        TextView gpClassTextView = findViewById(R.id.gp_class);
+        TextView levelTextView = findViewById(R.id.user_level);
+        TextView sessionTextView = findViewById(R.id.user_session);
+        TextView semesterTextView = findViewById(R.id.user_semester);
+        TextView totalUnitsTextView = findViewById(R.id.user_total_units);
+        TextView statTextView = findViewById(R.id.user_grades_stat);
+
+        String gpClassGrade = GPConstants.getGradeClass(GP);
+        String format = "%s %s";
+
+        gpTextView.setText(String.valueOf(GP));
+        gpClassTextView.setText(gpClassGrade);
+        levelTextView.setText(String.format(format, getString(R.string.level),  mLevel));
+        sessionTextView.setText(String.format(format, getString(R.string.session), mSession));
+        semesterTextView.setText(
+                String.format(format, getString(R.string.semester), mSemester));
+        totalUnitsTextView.setText(
+                String.format(format, getString(R.string.total_units), totalUnits));
+        statTextView.setText(String.format(format, getString(R.string.stat), stat));
     }
 
     private final View.OnClickListener editListener = new View.OnClickListener() {

@@ -95,17 +95,21 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
                 getSupportLoaderManager().initLoader(1, null, this);
             }
         } else {
-            mGrades = savedInstanceState.getParcelableArrayList(GPConstants.KEY_GRADES);
+            showSavedInstanceData(savedInstanceState);
+        }
+    }
 
-            if (mGrades != null) {
-                for (Grade g : mGrades) {
-                    String course = g.getCourse();
-                    int formattedUnit = g.getUnit();
-                    String score = g.getGrade();
-                    String unit = formattedUnit == 0 ? GPConstants.NONE : String.valueOf(formattedUnit);
+    private void showSavedInstanceData(Bundle savedInstanceState) {
+        mGrades = savedInstanceState.getParcelableArrayList(GPConstants.KEY_GRADES);
 
-                    addRowToContainer(course, unit, score);
-                }
+        if (mGrades != null) {
+            for (Grade g : mGrades) {
+                String course = g.getCourse();
+                int formattedUnit = g.getUnit();
+                String score = g.getGrade();
+                String unit = formattedUnit == 0 ? GPConstants.NONE : String.valueOf(formattedUnit);
+
+                addRowToContainer(course, unit, score);
             }
         }
     }
@@ -286,7 +290,7 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
         i.putExtra(GPConstants.KEY_MODE, mMode);
         i.putExtra(GPConstants.KEY_INIT_DETAILS, mInitialDetailsToEdit);
         i.putExtra(GPConstants.KEY_GRADES_STAT, Grade.getStat());
-        i.putExtra("GRADE", mGrades);
+        i.putExtra(GPConstants.KEY_GRADES, mGrades);
 
         startActivity(i);
     }
@@ -294,10 +298,21 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
     private void setupDetailsSpinners (String level, String session,
                                        String semester, String totalUnits){
         // Setting up the ArrayAdapter
-        ArrayAdapter levelSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.level_option, android.R.layout.simple_spinner_item);
-        ArrayAdapter sessionSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.session_option, android.R.layout.simple_spinner_item);
-        ArrayAdapter semesterSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.semester_option, android.R.layout.simple_spinner_item);
-        ArrayAdapter totalUnitsSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.total_units_option, android.R.layout.simple_spinner_item);
+        ArrayAdapter<CharSequence> levelSpinnerAdapter = ArrayAdapter
+                .createFromResource
+                        (this, R.array.level_option, android.R.layout.simple_spinner_item);
+
+        ArrayAdapter<CharSequence> sessionSpinnerAdapter = ArrayAdapter
+                .createFromResource(
+                        this, R.array.session_option, android.R.layout.simple_spinner_item);
+
+        ArrayAdapter<CharSequence> semesterSpinnerAdapter = ArrayAdapter
+                .createFromResource(
+                        this, R.array.semester_option, android.R.layout.simple_spinner_item);
+
+        ArrayAdapter<CharSequence> totalUnitsSpinnerAdapter = ArrayAdapter
+                .createFromResource(
+                        this, R.array.total_units_option, android.R.layout.simple_spinner_item);
 
         // Specify dropdown layout style - simple list view with 1 item per line
         levelSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);
@@ -311,10 +326,14 @@ public class GPCalcActivity extends AppCompatActivity implements LoaderManager.L
         mSemesterSpinner.setAdapter(semesterSpinnerAdapter);
         mTotalUnitsSpinner.setAdapter(totalUnitsSpinnerAdapter);
 
-        int levelPosition = GPConstants.getPositionInSpinner(level, getResources().getStringArray(R.array.level_option));
-        int sessionPosition = GPConstants.getPositionInSpinner(session, getResources().getStringArray(R.array.session_option));
-        int semesterPosition = GPConstants.getPositionInSpinner(semester, getResources().getStringArray(R.array.semester_option));
-        int totalUnitsPosition = GPConstants.getPositionInSpinner(totalUnits, getResources().getStringArray(R.array.total_units_option));
+        int levelPosition = GPConstants.getPositionInSpinner(
+                level, getResources().getStringArray(R.array.level_option));
+        int sessionPosition = GPConstants.getPositionInSpinner(
+                session, getResources().getStringArray(R.array.session_option));
+        int semesterPosition = GPConstants.getPositionInSpinner(
+                semester, getResources().getStringArray(R.array.semester_option));
+        int totalUnitsPosition = GPConstants.getPositionInSpinner(
+                totalUnits, getResources().getStringArray(R.array.total_units_option));
 
         mLevelSpinner.setSelection(levelPosition);
         mSessionSpinner.setSelection(sessionPosition);

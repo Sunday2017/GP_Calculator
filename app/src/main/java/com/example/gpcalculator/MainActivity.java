@@ -23,6 +23,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 public class MainActivity extends AppCompatActivity implements RecyclerViewCursorAdapter.RecyclerItemClickListener {
 
     private RecyclerViewCursorAdapter mAdapter;
+    private TextView mEmptyView;
+    private RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,9 +32,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         setContentView(R.layout.activity_main);
 
         // Initialising variables
-        // Setting up global variables
         FloatingActionButton mAddSemesterTextView = findViewById(R.id.add_new_semester);
-        // mEmptyViewForList = findViewById(R.id.empty_view);
+        mEmptyView = findViewById(R.id.empty_view);
 
         // Click listener for the floating action button
         mAddSemesterTextView.setOnClickListener(new View.OnClickListener() {
@@ -45,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         });
 
         // Initialise Recycler view
-        RecyclerView recyclerView = findViewById(R.id.list_item);
+        recyclerView = findViewById(R.id.list_item);
 
         // Setting the layout manager
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -70,8 +71,18 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         visualiseCursorDetails(c);
     }
 
+    private void showEmptyView() {
+        mEmptyView.setVisibility(View.VISIBLE);
 
-   // @Override
+        recyclerView.setVisibility(View.INVISIBLE);
+    }
+
+    private void hideEmptyView() {
+        mEmptyView.setVisibility(View.INVISIBLE);
+
+        recyclerView.setVisibility(View.VISIBLE);
+    }
+
     private void visualiseCursorDetails(Cursor data) {
 
         TextView cumulativeView = findViewById(R.id.cumulative_view);
@@ -79,14 +90,16 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
 
         /*
         * COMPUTING CGPA
-        * */
+        */
         if (data != null){
 
             // When there is no data
             if (data.getCount() == 0) {
                 gradeClassTV.setText("");
                 cumulativeView.setText("0.0");
+
                 mAdapter.swapCursor(data);
+                showEmptyView();
                 return;
             }
 
@@ -110,10 +123,14 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
             // Setting texts
             cumulativeView.setText(String.valueOf(CGPA));
             gradeClassTV.setText(gradeClass);
-        }
 
-        // Change cursor of adapter
-        mAdapter.changeCursor(data);
+            hideEmptyView();
+
+            // Change cursor of adapter
+            mAdapter.changeCursor(data);
+        }else {
+            showEmptyView();
+        }
     }
 
     @Override
@@ -146,6 +163,11 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
 
     @Override
     public void onItemDeleteClick(View v, final int position) {
+        deleteMessageDialog(v);
+    }
+
+
+    private void deleteMessageDialog(View v) {
         final Context context = v.getContext();
 
         final TextView detailsTV = v.findViewById(R.id.item_details);
@@ -154,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         // for the positive and negative buttons on the dialog.
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setMessage(R.string.confirm_to_delete);
+
         builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -178,14 +201,19 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
 
                 if (num > 0) {
 
-                    Cursor cursor = getContentResolver().query(GPEntry.CONTENT_URI,null,  null, null, null);
+                    Cursor cursor = getContentResolver()
+                            .query(GPEntry.CONTENT_URI,
+                                    null,
+                                    null,
+                                    null,
+                                    null);
+
                     visualiseCursorDetails(cursor);
 
                     Toast.makeText(context, R.string.successful_delete_msg, Toast.LENGTH_SHORT).show();
                 }
             }
         });
-
 
         builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
@@ -201,5 +229,4 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
     }
-
 }

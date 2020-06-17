@@ -15,13 +15,14 @@ import com.example.gpcalculator.data.GPContract.GPConstants;
 
 import com.example.gpcalculator.R;
 
-public class RecyclerViewCursorAdapter extends AbstractCustomAdapter<RecyclerViewCursorAdapter.ItemViewHolder> {
+public class RecyclerViewCursorAdapter
+        extends AbstractCustomAdapter<RecyclerViewCursorAdapter.ItemViewHolder> {
 
     final private RecyclerItemClickListener mOnItemClickListener;
 
-    public RecyclerViewCursorAdapter(Cursor cursor, RecyclerItemClickListener onItemClickListener) {
+    public RecyclerViewCursorAdapter
+            (Cursor cursor, RecyclerItemClickListener onItemClickListener) {
         super(cursor);
-
         mOnItemClickListener = onItemClickListener;
     }
 
@@ -31,11 +32,11 @@ public class RecyclerViewCursorAdapter extends AbstractCustomAdapter<RecyclerVie
     }
 
     @Override
-    public void onBindViewHolder(ItemViewHolder viewHolder, final Cursor cursor) {
+    public void onBindViewHolder(ItemViewHolder viewHolder, Cursor cursor) {
 
         TextView gpTV = viewHolder.GPTextView;
         TextView gpClassTV = viewHolder.GPClassTextView;
-        final TextView detailsTV = viewHolder.detailsTextView;
+        TextView detailsTV = viewHolder.detailsTextView;
 
         /* Level ### Session*/
         // [0] is ""
