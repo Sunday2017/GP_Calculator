@@ -19,13 +19,16 @@ public interface GradeDao {
     void insertGrade(GradeEntry gradeEntry);
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
-    void updateGrade(GradeEntry gradeEntry);
+    void updateGrade(GradeEntry gradeEntry, String level);
 
     @Delete
     void deleteGrade(GradeEntry taskEntry);
 
+    @Query("DELETE FROM UserGrades WHERE level =:level AND session=:session AND semester=:semester")
+    void deleteGradeByProperties(String level, String session, String semester);
+
     @Query("SELECT * FROM UserGrades " +
             "WHERE level = :level AND session = :session AND semester = :semester" +
             " LIMIT 1")
-    LiveData<GradeEntry> loadTaskByProperties(String level, String session, String semester);
+    LiveData<GradeEntry> loadGradeByProperties(String level, String session, String semester);
 }

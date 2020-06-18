@@ -22,12 +22,15 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import java.util.Arrays;
+
 public class GPCalcActivity extends AppCompatActivity{
 
     private LinearLayout mFormContainer;
     private Spinner mLevelSpinner, mSessionSpinner, mSemesterSpinner, mTotalUnitsSpinner;
 
     private String mMode;
+    private String initLevel, initSession, initSemester;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,26 +71,36 @@ public class GPCalcActivity extends AppCompatActivity{
         Intent intent = getIntent();
 
         if (intent != null) {
-            setupDetailsSpinners();
+
             if (savedInstanceState == null){
                 mMode = intent.getStringExtra(Helper.KEY_MODE);
-                addRowToContainer("MTH", "2", "A");
+
+                if (mMode.equals(Helper.MODE_ADD_NEW)) {
+                    setupDetailsSpinners(Helper.NONE, Helper.NONE, Helper.NONE, Helper.NONE);
+                    addRowToContainer("MTH", "2", "A");
+                }else if (mMode.equals(Helper.MODE_VIEW)) {
+                    String[] courses = intent.getStringArrayExtra(Helper.KEY_COURSES);
+                    String[] units =  intent.getStringArrayExtra(Helper.KEY_UNITS);
+                    String[] grades = intent.getStringArrayExtra(Helper.KEY_GRADES);
+                    String[] properties = intent.getStringArrayExtra(Helper.KEY_PROPERTIES);
+
+                    initLevel = properties[1];
+                    initSession = properties[2];
+                    initSemester = properties[3];
+
+                    setupDetailsSpinners(initLevel, initSession, initSemester, properties[4]);
+                    populateFormContainer(courses, units, grades);
+                }
+
             }else {
+                setupDetailsSpinners(Helper.NONE, Helper.NONE, Helper.NONE, Helper.NONE);
                 mMode = savedInstanceState.getString(Helper.KEY_MODE);
 
                 String[] courses = savedInstanceState.getStringArray(Helper.KEY_COURSES);
                 String[] units =  savedInstanceState.getStringArray(Helper.KEY_UNITS);
                 String[] grades = savedInstanceState.getStringArray(Helper.KEY_GRADES);
 
-                int count = courses.length;
-
-                for (int i = 0; i < count; i++) {
-                    String course = courses[i];
-                    String unit = units[i];
-                    String grade = grades[i];
-
-                    addRowToContainer(course, unit, grade);
-                }
+                populateFormContainer(courses, units, grades);
             }
 
             if (mMode.equals(Helper.MODE_ADD_NEW)) {
@@ -97,6 +110,18 @@ public class GPCalcActivity extends AppCompatActivity{
                 // Set the title and the mode
                 this.setTitle(R.string.edit);
             }
+        }
+    }
+
+    private void populateFormContainer(String[] courses, String[] units, String[] grades){
+        int count = courses.length;
+
+        for (int i = 0; i < count; i++) {
+            String course = courses[i];
+            String unit = units[i];
+            String grade = grades[i];
+
+            addRowToContainer(course, unit, grade);
         }
     }
 
@@ -222,11 +247,11 @@ public class GPCalcActivity extends AppCompatActivity{
         double GP = (double) Math.round(accumulatedGradePoint / selectedTotalUnits * 100) / 100;
 
         String[] properties = new String[5];
-        properties[0] = level;
-        properties[1] = session;
-        properties[2] = semester;
-        properties[3] = strTotalUnits;
-        properties[4] = String.valueOf(GP);
+        properties[0] = String.valueOf(GP);
+        properties[1] = level;
+        properties[2] = session;
+        properties[3] = semester;
+        properties[4] = strTotalUnits;
 
         showOverview(courses, units, grades, properties);
     }
@@ -234,25 +259,37 @@ public class GPCalcActivity extends AppCompatActivity{
     private void showOverview (String[] courses, String[] units,
                                String[] grades, String[] properties) {
 
+        String mode = mMode.equals(Helper.MODE_VIEW) ? Helper.MODE_UPDATE : mMode;
+
+        String[] propertiesToPut;
+
+        if (mMode.equals(Helper.MODE_VIEW)) {
+            propertiesToPut = new String[8];
+
+            propertiesToPut[0] = properties[0];
+            propertiesToPut[1] = properties[1];
+            propertiesToPut[2] = properties[2];
+            propertiesToPut[3] = properties[3];
+            propertiesToPut[4] = properties[4];
+            propertiesToPut[5] = initLevel;
+            propertiesToPut[6] = initSession;
+            propertiesToPut[7] = initSemester;
+        } else {
+            propertiesToPut = properties;
+        }
+
         // GP calculated? Now, show Overview...
         Intent i = new Intent(this, OverviewActivity.class);
-        i.putExtra(Helper.KEY_MODE, mMode);
+        i.putExtra(Helper.KEY_MODE, mode);
         i.putExtra(Helper.KEY_COURSES, courses);
         i.putExtra(Helper.KEY_UNITS, units);
         i.putExtra(Helper.KEY_GRADES, grades);
-        i.putExtra(Helper.KEY_PROPERTIES, properties);
+        i.putExtra(Helper.KEY_PROPERTIES, propertiesToPut);
         startActivity(i);
     }
 
-    private void setupDetailsSpinners (){
-        /*String level = Helper.NONE;
-        String session = Helper.NONE;
-        String semester = Helper.NONE;
-        String totalUnits = Helper.NONE;*/
-        String level = "100";
-        String session = "2018/2019";
-        String semester = "Harmattan";
-        String totalUnits = "2";
+    private void setupDetailsSpinners (String level, String session, String semester, String totalUnits){
+
 
         // Setting up the ArrayAdapter
         ArrayAdapter<CharSequence> levelSpinnerAdapter = ArrayAdapter
@@ -325,8 +362,7 @@ public class GPCalcActivity extends AppCompatActivity{
         mFormContainer.addView(parent);
     }
 
-    private void setupRowSpinners (Spinner unitSpinner, Spinner gradeSpinner, String
-    unitSelected, String gradeSelected){
+    private void setupRowSpinners (Spinner unitSpinner, Spinner gradeSpinner, String unitSelected, String gradeSelected){
         // Create adapter for spinner. The list options are from the String array it will use
         // the spinner will use the default layout
         ArrayAdapter unitSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.units_option, android.R.layout.simple_spinner_item);

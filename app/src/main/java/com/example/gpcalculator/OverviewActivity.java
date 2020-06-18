@@ -3,6 +3,7 @@ package com.example.gpcalculator;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NavUtils;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -38,6 +39,8 @@ public class OverviewActivity extends AppCompatActivity {
         if (i != null) {
             Button saveUpdateEditButton = findViewById(R.id.save_update_edit_btn);
             mMode = i.getStringExtra(Helper.KEY_MODE);
+            mDb = AppDatabase.getInstance(getApplicationContext());
+
 
             if (mMode.equals(Helper.MODE_ADD_NEW)) {
                 saveUpdateEditButton.setText(getString(R.string.save_btn));
@@ -49,17 +52,52 @@ public class OverviewActivity extends AppCompatActivity {
                 setViewsText();
 
                 saveUpdateEditButton.setOnClickListener(onSaveListener);
+            } else if (mMode.equals(Helper.MODE_VIEW)){
+                saveUpdateEditButton.setText(getString(R.string.edit_btn));
+                String level = i.getStringExtra(Helper.KEY_LEVEL);
+                String session = i.getStringExtra(Helper.KEY_SESSION);
+                String semester = i.getStringExtra(Helper.KEY_SEMESTER);
+
+                LiveData<GradeEntry> entryLiveData =  mDb.gradeDao()
+                        .loadGradeByProperties(level, session, semester);
+                entryLiveData.observe(this, new Observer<GradeEntry>() {
+                    @Override
+                    public void onChanged(GradeEntry gradeEntry) {
+                        courses = gradeEntry.getCourses();
+                        units = gradeEntry.getUnits();
+                        grades = gradeEntry.getGrades();
+
+                        properties = new String[5];
+                        properties[0] = String.valueOf(gradeEntry.getGP());
+                        properties[1] = gradeEntry.getLevel();
+                        properties[2] = gradeEntry.getSession();
+                        properties[3] = gradeEntry.getSemester();
+                        properties[4] = String.valueOf(gradeEntry.getTotalUnits());
+
+                        setViewsText();
+                    }
+                });
+
+                saveUpdateEditButton.setOnClickListener(editListener);
+            } else if (mMode.equals(Helper.MODE_UPDATE)) {
+                this.setTitle(R.string.update_btn);
+                saveUpdateEditButton.setText(getString(R.string.update_btn));
+
+                courses = i.getStringArrayExtra(Helper.KEY_COURSES);
+                units = i.getStringArrayExtra(Helper.KEY_UNITS);
+                grades = i.getStringArrayExtra(Helper.KEY_GRADES);
+                properties = i.getStringArrayExtra(Helper.KEY_PROPERTIES);
+                saveUpdateEditButton.setOnClickListener(updateListener);
             }
-            mDb = AppDatabase.getInstance(getApplicationContext());
         }
     }
 
     private void setViewsText() {
-        String level = properties[0];
-        String session = properties[1];
-        String semester = properties[2];
-        String totalUnits = properties[3];
-        double GP = Double.parseDouble(properties[4]);
+        double GP = Double.parseDouble(properties[0]);
+        String level = properties[1];
+        String session = properties[2];
+        String semester = properties[3];
+        String totalUnits = properties[4];
         String stat = Helper.getGradesStat(grades);
 
         TextView gpTextView = findViewById(R.id.calculated_gp);
@@ -87,25 +125,32 @@ public class OverviewActivity extends AppCompatActivity {
     private final View.OnClickListener editListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
+            Intent intent = new Intent(OverviewActivity.this, GPCalcActivity.class);
+            intent.putExtra(Helper.KEY_MODE, mMode);
+            intent.putExtra(Helper.KEY_COURSES, courses);
+            intent.putExtra(Helper.KEY_UNITS, units);
+            intent.putExtra(Helper.KEY_GRADES, grades);
+            intent.putExtra(Helper.KEY_PROPERTIES, properties);
 
+            startActivity(intent);
         }
     };
 
     private final View.OnClickListener onSaveListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            String level = properties[0];
-            String session = properties[1];
-            String semester = properties[2];
-            int totalUnits = Integer.parseInt(properties[3]);
-            double GP = Double.parseDouble(properties[4]);
+            double GP = Double.parseDouble(properties[0]);
+            String level = properties[1];
+            String session = properties[2];
+            String semester = properties[3];
+            int totalUnits = Integer.parseInt(properties[4]);
 
-            GradeEntry gradeEntry = new GradeEntry(courses, units, grades,
-                    level, session, semester, totalUnits, GP
+            GradeEntry gradeEntry = new GradeEntry(courses, units, grades, GP,
+                    level, session, semester, totalUnits
             );
 
             LiveData<GradeEntry> gradeEntryLiveData = mDb.gradeDao()
-                    .loadTaskByProperties(level, session, semester);
+                    .loadGradeByProperties(level, session, semester);
 
             if (gradeEntryLiveData.getValue() == null) {
                 mDb.gradeDao().insertGrade(gradeEntry);
@@ -118,126 +163,45 @@ public class OverviewActivity extends AppCompatActivity {
         }
     };
 
-    /*private final View.OnClickListener updateListener = new View.OnClickListener() {
+    private final View.OnClickListener updateListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            // Putting the level first, followed by session and the semester
-            // Helps in easy sorting of the grades.
-            final String details = Helper.STRING_SPLIT +mLevel+ Helper.STRING_SPLIT + mSession;
+            double GP = Double.parseDouble(properties[0]);
+            String level = properties[1];
+            String session = properties[2];
+            String semester = properties[3];
+            int totalUnits = Integer.parseInt(properties[4]);
+            final String initLevel = properties[5];
+            final String initSession = properties[6];
+            final String initSemester = properties[7];
 
-            // Initialise selection arguments and Uri
-            //mSelectionArgs = new String[]{details};
-            mUri = Uri.withAppendedPath(Helper.GPEntry.CONTENT_URI, details + Helper.STRING_SPLIT +mSemester);
+            GradeEntry gradeEntry = new GradeEntry(
+                    courses, units, grades,
+                    Double.parseDouble(properties[0]), level, session, semester, totalUnits);
 
-            StringBuilder courses = new StringBuilder();
-            StringBuilder units = new StringBuilder();
-            StringBuilder grades = new StringBuilder();
-            int numberOfGrades = mGradeEntry.size();
 
-            // Loop through the Grades
-            for (int i = 0; i < numberOfGrades; i++) {
-                GradeEntry gradeEntry = mGradeEntry.get(i);
-                courses.append(Helper.STRING_SPLIT).append(gradeEntry.getCourse());
-                units.append(Helper.STRING_SPLIT).append(gradeEntry.getUnit());
-                grades.append(Helper.STRING_SPLIT).append(gradeEntry.getGrade());
-            }
+            if (level.equals(initLevel) && session.equals(initSession) && semester.equals(initSemester)) {
 
-            // Initialise content values and put the appropriate pairs
-            final ContentValues values = new ContentValues();
-            values.put(GPEntry.COLUMN_COURSES, courses.toString());
-            values.put(GPEntry.COLUMN_UNITS, units.toString());
-            values.put(GPEntry.COLUMN_GRADES, grades.toString());
-            values.put(GPEntry.COLUMN_DETAILS, details);
-            values.put(GPEntry.COLUMN_GP, GP);
-            values.put(GPEntry.COLUMN_TU, GradeEntry.getTotalUnits());
-            values.put(GPEntry.COLUMN_SEMESTER, mSemester);
+                mDb.gradeDao().updateGrade(gradeEntry);
+                Log.d(TAG, "Updated successfully");
+                NavUtils.navigateUpFromSameTask(OverviewActivity.this);
+            } else {
+                LiveData<GradeEntry> entryLiveData = mDb.gradeDao().loadGradeByProperties(level, session, semester);
+                entryLiveData.observe(OverviewActivity.this, new Observer<GradeEntry>() {
+                    @Override
+                    public void onChanged(GradeEntry gradeEntry) {
+                        if (gradeEntry == null) {
+                            mDb.gradeDao().deleteGradeByProperties(initLevel, initSession, initSemester);
 
-            if (details.equals(mInitialDetailsToEdit)) {
-                // When the initial detail is same as current details
-                // Update the corresponding rows with the values
-                int noOfRowsUpdated = getContentResolver()
-                        .update(mUri, values, GPEntry.COLUMN_DETAILS +"= ?", new String[] {details} );
-
-                if (noOfRowsUpdated > 0) {
-                    goHome();
-                }
-
-            } else{
-
-                // When the current detail differs
-                // Check to see if a row with this detail already exist
-                // Check if the current details already exist in the db
-                Cursor c = getContentResolver().query(mUri,
-                        new String[] {Helper.GPEntry._ID},
-                        null,
-                        null,
-                        null);
-
-                // When the new defined details already exist
-                assert c != null;
-                if (c.getCount() == 1) {
-                    // Create an AlertDialog.Builder and set the message, and click listeners
-                    // for the positive and negative buttons on the dialog.
-                    AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                    builder.setMessage(R.string.details_already_exist);
-
-                    builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-
-                            // Delete the initial details row
-                            // Update the current details row
-                            int rowDeleted = getContentResolver().delete(mUri, Helper.GPEntry.COLUMN_DETAILS +"= ?", new String[] { mInitialDetailsToEdit } );
-
-                            if (rowDeleted > 0) {
-                                int noOfRowsUpdated = getContentResolver().update(mUri, values, Helper.GPEntry.COLUMN_DETAILS +"= ?", new String[] { details } );
-
-                                if (noOfRowsUpdated > 0) {
-                                    Toast.makeText(OverviewActivity.this, "Updated successfully", Toast.LENGTH_SHORT).show();
-                                    goHome();
-                                }
-                            }
-                        }
-                    });
-
-                    builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            // User clicked the "Keep editing" button, so dismiss the dialog
-                            // and continue editing the pet.
-                            if (dialog != null) {
-                                dialog.dismiss();
-                            }
-                        }
-                    });
-
-                    // Create and show the AlertDialog
-                    AlertDialog alertDialog = builder.create();
-                    alertDialog.show();
-                }
-                else{
-                    // Current details doesn't exist yet
-                    // Initial details needs to be updated to a new details
-
-                    int rowDeleted = getContentResolver().delete(mUri, Helper.GPEntry.COLUMN_DETAILS +"= ?", new String[] { mInitialDetailsToEdit } );
-
-                    if (rowDeleted > 0) {
-
-                        mUri = getContentResolver().insert(mUri, values);
-
-                        if (mUri != null) {
-                            goHome();
+                            mDb.gradeDao();
                         } else{
-                            Log.i("###", "Update? Inserting not successful!");
+                            Log.d(TAG, "Does exist");
                         }
-                    } else{
-                        Log.i("###", "Update? Inserting not successful!");
                     }
-                }
-
-                c.close();
+                });
             }
         }
-    };*/
+    };
 
     private void goHome() {
         Intent i = new Intent(OverviewActivity.this, MainActivity.class);

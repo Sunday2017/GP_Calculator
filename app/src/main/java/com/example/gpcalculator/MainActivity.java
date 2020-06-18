@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements GradeAdapter.Recy
                 return false;
             }
 
-            // Called when a user swipes left or right on a ViewHolder
+            // Called when a user swipes lqeft or right on a ViewHolder
             @Override
             public void onSwiped(@NonNull final RecyclerView.ViewHolder viewHolder, int swipeDir) {
 
@@ -161,74 +161,15 @@ public class MainActivity extends AppCompatActivity implements GradeAdapter.Recy
         hideEmptyView();
     }
 
-/*
-
-    private void deleteMessageDialog(View v) {
-        final Context context = v.getContext();
-
-        final TextView detailsTV = v.findViewById(R.id.item_details);
-
-        // Create an AlertDialog.Builder and set the message, and click listeners
-        // for the positive and negative buttons on the dialog.
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setMessage(R.string.confirm_to_delete);
-
-        builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-                // This is an array of {level, semester, session}
-                String[] detArray = detailsTV.getText().toString().split(" ");
-
-                String level = detArray[0];
-                String semester = detArray[1];
-                String session = detArray[2];
-
-                String gradeDetails = Helper.STRING_SPLIT + level
-                        + Helper.STRING_SPLIT +session;
-
-                String whereClause = GPEntry.COLUMN_DETAILS +"= ? AND "
-                        + GPEntry.COLUMN_SEMESTER + "= ?";
-
-                String[] whereArgs = new String[] {gradeDetails, semester};
-
-                int num = context.getContentResolver()
-                        .delete(GPEntry.CONTENT_URI, whereClause, whereArgs);
-
-                if (num > 0) {
-
-                    Cursor cursor = getContentResolver()
-                            .query(GPEntry.CONTENT_URI,
-                                    null,
-                                    null,
-                                    null,
-                                    null);
-
-                    populateUI(cursor);
-
-                    Toast.makeText(context, R.string.successful_delete_msg, Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                // User clicked the "Keep editing" button, so dismiss the dialog
-                // and continue editing the pet.
-                if (dialog != null) {
-                    dialog.dismiss();
-                }
-            }
-        });
-
-        // Create and show the AlertDialog
-        AlertDialog alertDialog = builder.create();
-        alertDialog.show();
-    }
-*/
-
     @Override
     public void onItemClick(String level, String session, String semester) {
-        // LiveData<GradeEntry> gradeEntryLiveData = mDb.gradeDao().loadTaskByProperties(level, session, semester);
+
+        Intent intent = new Intent(MainActivity.this, OverviewActivity.class);
+        intent.putExtra(Helper.KEY_MODE, Helper.MODE_VIEW);
+        intent.putExtra(Helper.KEY_LEVEL, level);
+        intent.putExtra(Helper.KEY_SESSION, session);
+        intent.putExtra(Helper.KEY_SEMESTER, semester);
+        startActivity(intent);
     }
+
 }

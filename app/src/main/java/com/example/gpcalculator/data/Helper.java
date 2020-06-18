@@ -15,10 +15,18 @@ public final class Helper {
     public static final String KEY_MODE = "mode";
     public static final String MODE_ADD_NEW = "add new";
     public static final String MODE_VIEW = "view";
+    public static final String MODE_UPDATE = "update";
     public static final String KEY_COURSES = "courses";
     public static final String KEY_UNITS = "units";
     public static final String KEY_GRADES = "grades";
     public static final String KEY_PROPERTIES = "props";
+    public static final String KEY_LEVEL = "level";
+    public static final String KEY_SESSION = "session";
+    public static final String KEY_SEMESTER = "semester";
+    public static final String KEY_INIT_LEVEL = "initlevel";
+    public static final String KEY_INIT_SESSION = "initsession";
+    public static final String KEY_INIT_SEMESTER = "initsemester";
+
 
     public static int getGradePoint(String grade) {
         switch (grade){
