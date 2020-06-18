@@ -1,30 +1,36 @@
 package com.example.gpcalculator;
 
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.example.gpcalculator.data.GPContract;
-import com.example.gpcalculator.data.GPContract.GPConstants;
-import com.example.gpcalculator.data.GPContract.GPEntry;
-import com.example.gpcalculator.data.RecyclerViewCursorAdapter;
+import com.example.gpcalculator.data.AppDatabase;
+import com.example.gpcalculator.data.GradeAdapter;
+import com.example.gpcalculator.data.GradeEntry;
+import com.example.gpcalculator.data.Helper;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-public class MainActivity extends AppCompatActivity implements RecyclerViewCursorAdapter.RecyclerItemClickListener {
+import java.util.List;
 
-    private RecyclerViewCursorAdapter mAdapter;
+public class MainActivity extends AppCompatActivity implements GradeAdapter.RecyclerItemClickListener {
+
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private GradeAdapter mAdapter;
     private TextView mEmptyView;
     private RecyclerView recyclerView;
+
+    AppDatabase mDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
             public void onClick(View v) {
                 // Start new Activity explicitly
                 Intent i = new Intent(MainActivity.this, GPCalcActivity.class);
+                i.putExtra(Helper.KEY_MODE, Helper.MODE_ADD_NEW);
                 startActivity(i);
             }
         });
@@ -51,24 +58,53 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         // Setting the layout manager
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-
         recyclerView.setHasFixedSize(true);
 
+        DividerItemDecoration decoration = new DividerItemDecoration(getApplicationContext(), DividerItemDecoration.VERTICAL);
+        recyclerView.addItemDecoration(decoration);
+
+        /*
+         Add a touch helper to the RecyclerView to recognize when a user swipes to delete an item.
+         An ItemTouchHelper enables touch behavior (like swipe and move) on each ViewHolder,
+         and uses callbacks to signal when a user is performing these actions.
+         */
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            // Called when a user swipes left or right on a ViewHolder
+            @Override
+            public void onSwiped(@NonNull final RecyclerView.ViewHolder viewHolder, int swipeDir) {
+
+            }
+        }).attachToRecyclerView(recyclerView);
+
         // Initialising and setting adapter
-        mAdapter = new RecyclerViewCursorAdapter(null, this);
+        mAdapter = new GradeAdapter(this, this);
         recyclerView.setAdapter(mAdapter);
 
-        mAdapter.notifyDataSetChanged();
+        mDb = AppDatabase.getInstance((getApplicationContext()));
 
-        queryDatabase();
+        setupGrades();
     }
 
-    private void queryDatabase() {
+    private void setupGrades() {
 
-        // Query DB for the whole table
-        Cursor c = getContentResolver().query(GPEntry.CONTENT_URI, null, null, null, null);
+        LiveData<List<GradeEntry>> listLiveData = mDb.gradeDao().loadAllGrades();
 
-        visualiseCursorDetails(c);
+        listLiveData.observe(this, new Observer<List<GradeEntry>>() {
+            @Override
+            public void onChanged(List<GradeEntry> gradeEntries) {
+                mAdapter.setGrades(gradeEntries);
+                mAdapter.notifyDataSetChanged();
+
+                computeCGPA(gradeEntries);
+            }
+        });
     }
 
     private void showEmptyView() {
@@ -83,89 +119,49 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         recyclerView.setVisibility(View.VISIBLE);
     }
 
-    private void visualiseCursorDetails(Cursor data) {
+    private void computeCGPA(List<GradeEntry> gradeEntries) {
 
         TextView cumulativeView = findViewById(R.id.cumulative_view);
         TextView gradeClassTV = findViewById(R.id.gp_class);
 
-        /*
-        * COMPUTING CGPA
-        */
-        if (data != null){
-
-            // When there is no data
-            if (data.getCount() == 0) {
-                gradeClassTV.setText("");
-                cumulativeView.setText("0.0");
-
-                mAdapter.swapCursor(data);
-                showEmptyView();
-                return;
-            }
-
-            double cumulative = 0;
-            int overallTotalUnits = 0;
-
-            while (data.moveToNext()) {
-
-                double gp = data.getDouble(data.getColumnIndex(GPEntry.COLUMN_GP));
-                int tu = data.getInt(data.getColumnIndex(GPEntry.COLUMN_TU));
-                cumulative += gp * tu;
-                overallTotalUnits += tu;
-            }
-
-            // Evaluate the CGPA
-            double CGPA = (double) Math.round(cumulative / overallTotalUnits * 100) / 100;
-
-            // What class is the CGPA in?
-            String gradeClass = GPConstants.getGradeClass(CGPA);
-
-            // Setting texts
-            cumulativeView.setText(String.valueOf(CGPA));
-            gradeClassTV.setText(gradeClass);
-
-            hideEmptyView();
-
-            // Change cursor of adapter
-            mAdapter.changeCursor(data);
-        }else {
-            showEmptyView();
+        if (gradeEntries == null) {
+            Log.d(TAG, "Grade entries is empty");
+            return;
         }
+
+        int gradeCount = gradeEntries.size();
+        if (gradeCount == 0){
+            gradeClassTV.setText("");
+            cumulativeView.setText("0.0");
+            showEmptyView();
+            return;
+        }
+
+        double cumulative = 0;
+        int overallTotalUnits = 0;
+
+        for (int i = 0; i < gradeCount; i++) {
+            GradeEntry gradeEntry = gradeEntries.get(i);
+            double gp = gradeEntry.getGP();
+            int tu = gradeEntry.getTotalUnits();
+            cumulative += gp * tu;
+            overallTotalUnits += tu;
+        }
+
+        // Evaluate the CGPA
+        double CGPA = (double) Math.round(cumulative / overallTotalUnits * 100) / 100;
+
+        // What class is the CGPA in?
+        String gradeClass = Helper.getGradeClass(CGPA);
+
+        // Setting texts
+        cumulativeView.setText(String.valueOf(CGPA));
+        gradeClassTV.setText(gradeClass);
+
+        hideEmptyView();
     }
 
-    @Override
-    public void onItemClick(Cursor cursor, int position) {
-
-        cursor.moveToPosition(position);
-
-        String details = cursor.getString(cursor.getColumnIndex(GPContract.GPEntry.COLUMN_DETAILS));
-        double gp = cursor.getDouble(cursor.getColumnIndex(GPEntry.COLUMN_GP));
-        int totalUnits = cursor.getInt(cursor.getColumnIndex(GPEntry.COLUMN_TU));
-        String grades = cursor.getString(cursor.getColumnIndex(GPEntry.COLUMN_GRADES));
-        String semester = cursor.getString(cursor.getColumnIndex(GPEntry.COLUMN_SEMESTER));
-
-        String gradesStat = GPConstants.getGradesStat(grades);
-
-        // Array of {"", level, session}
-        String[] detArray = details.split(GPConstants.STRING_SPLIT);
-
-        Intent i = new Intent(MainActivity.this, OverviewActivity.class);
-        i.putExtra(GPConstants.KEY_CALCULATED_GP, gp);
-        i.putExtra(GPConstants.KEY_LEVEL, Integer.parseInt(detArray[1]));
-        i.putExtra(GPConstants.KEY_SESSION, detArray[2]);
-        i.putExtra(GPConstants.KEY_SEMESTER, semester);
-        i.putExtra(GPConstants.KEY_TOTAL_UNITS, totalUnits);
-        i.putExtra(GPConstants.KEY_MODE, GPConstants.STRING_VIEW_MODE);
-        i.putExtra(GPConstants.KEY_GRADES_STAT, gradesStat);
-
-        startActivity(i);
-    }
-
-    @Override
-    public void onItemDeleteClick(View v, final int position) {
-        deleteMessageDialog(v);
-    }
-
+/*
 
     private void deleteMessageDialog(View v) {
         final Context context = v.getContext();
@@ -188,8 +184,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
                 String semester = detArray[1];
                 String session = detArray[2];
 
-                String gradeDetails = GPConstants.STRING_SPLIT + level
-                        + GPConstants.STRING_SPLIT +session;
+                String gradeDetails = Helper.STRING_SPLIT + level
+                        + Helper.STRING_SPLIT +session;
 
                 String whereClause = GPEntry.COLUMN_DETAILS +"= ? AND "
                         + GPEntry.COLUMN_SEMESTER + "= ?";
@@ -208,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
                                     null,
                                     null);
 
-                    visualiseCursorDetails(cursor);
+                    populateUI(cursor);
 
                     Toast.makeText(context, R.string.successful_delete_msg, Toast.LENGTH_SHORT).show();
                 }
@@ -228,5 +224,11 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewCurso
         // Create and show the AlertDialog
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
+    }
+*/
+
+    @Override
+    public void onItemClick(String level, String session, String semester) {
+        // LiveData<GradeEntry> gradeEntryLiveData = mDb.gradeDao().loadTaskByProperties(level, session, semester);
     }
 }
